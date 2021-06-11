@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "acopoweropt"
+version = "0.1.0"
+description = "Ant Colony Power Systems Optimizer"
+authors = ["Ettore Aquino <ettore@ettoreaquino.com>"]
+
+readme = "README.md"
+
+include = [
+    { path = "tests", format = "sdist" }
+]
+
+repository = "https://github.com/ettoreaquino/acopoweropt"
+
+keywords = ["power systems", "optimization", "python"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pandas = "^1.2.4"
+cvxopt = "^1.2.6"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+jupyterlab = "^3.0.16"
+pylint = "^2.8.3"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
