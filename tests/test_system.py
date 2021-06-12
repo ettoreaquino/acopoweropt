@@ -24,5 +24,14 @@ class TestSystem(TestCase):
         with self.subTest():
             System = system.PowerSystem(name='s15')
 
-            self.assertEqual(System.opzs.total.to_list(),
+            self.assertEqual(System.opzs.options.to_list(),
                              [1,4,1,1,4,4,1,1,1,1,1,3,1,1,1])
+
+    def test_System_should_correctly_randomize_a_combination_of_tgus(self):
+        with self.subTest():
+            PSystem = system.PowerSystem(name='s10')
+
+            opt = PSystem.rand_opt_zones()
+
+            self.assertEqual(len(opt), len(PSystem.tgus))
+            self.assertTrue(opt[0] <= PSystem.opzs.iloc[0].options)
