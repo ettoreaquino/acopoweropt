@@ -19,10 +19,10 @@ For example, 's10'.
 """
 
 
-
 import json
 import pandas as pd
 import random
+
 
 class PowerSystem:
     """Singleton Class to load a power system data.
@@ -53,25 +53,25 @@ class PowerSystem:
     def __init__(self, name: str):
         self.__read_config(name=name)
 
-        self.tgus = self.data.tgu.unique() 
-        self.opzs = (self.data.tgu.value_counts()
-                                  .sort_index()
-                                  .to_frame(name='options'))
+        self.tgus = self.data.tgu.unique()
+        self.opzs = (
+            self.data.tgu.value_counts().sort_index().to_frame(name="options")
+        )
 
     def __read_config(self, name: str):
         # This special method initializes the power system using the config file
         # systems.json. If the name is not present in the file, __initialize
         # raises an exception.
         try:
-            with open('systems.json') as f:
+            with open("systems.json") as f:
                 self.name = name
                 psystem = json.loads(f.read())
 
-                df = pd.DataFrame(psystem[name]['data'])
+                df = pd.DataFrame(psystem[name]["data"])
                 df = df.rename(columns=df.iloc[0]).drop([0])
 
                 self.data = df
-                self.load = psystem[name]['load']
+                self.load = psystem[name]["load"]
 
         except Exception as e:
             print("Error reading system {} from systems.json".format(name))
@@ -88,4 +88,4 @@ class PowerSystem:
             List representing which operative zone was randomized for each TGU.
 
         """
-        return [random.randint(1,j) for i,j in self.opzs.itertuples()]
+        return [random.randint(1, j) for i, j in self.opzs.itertuples()]

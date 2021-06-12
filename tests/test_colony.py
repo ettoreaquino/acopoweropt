@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from acopoweropt import colony
 
+
 class TestColony(TestCase):
     def test_colony_should_receive_ants(self):
         with self.subTest():
