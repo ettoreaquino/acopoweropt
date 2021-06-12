@@ -19,5 +19,5 @@ check:
 build:
 	@poetry build
 
-publish:
+publish: test format check build
 	@poetry publish
