@@ -10,6 +10,8 @@ include = [
     { path = "tests", format = "sdist" }
 ]
 
+exclude = ["Makefile","README.rst","systems.json","Notebook.ipynb"]
+
 repository = "https://github.com/ettoreaquino/acopoweropt"
 
 keywords = ["power systems", "optimization", "python"]
