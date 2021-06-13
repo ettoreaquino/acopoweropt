@@ -53,39 +53,48 @@ class PowerSystem:
     def __init__(self, name: str):
         self.__read_config(name=name)
 
-        self.tgus = self.data.tgu.unique()
-        self.opzs = (
-            self.data.tgu.value_counts().sort_index().to_frame(name="options")
-        )
-
     def __read_config(self, name: str):
         # This special method initializes the power system using the config file
         # systems.json. If the name is not present in the file, __initialize
         # raises an exception.
         try:
             with open("systems.json") as f:
-                self.name = name
-                psystem = json.loads(f.read())
+                content = json.loads(f.read())
+                psystem = content[name]
+        except:
+            print("Error reading system '{}' from systems.json".format(name))
 
-                df = pd.DataFrame(psystem[name]["data"])
-                df = df.rename(columns=df.iloc[0]).drop([0])
+        df = pd.DataFrame(psystem["data"])
+        df = df.rename(columns=df.iloc[0]).drop([0])
 
-                self.data = df
-                self.load = psystem[name]["load"]
+        self.name = name
+        self.data = df.set_index('tgu')
+        self.demand = psystem["demand"]
 
-        except Exception as e:
-            print("Error reading system {} from systems.json".format(name))
-
-    def rand_opt_zones(self):
-        """Returns a random combination of possible operative zones of each TGU.
+    def sample_operation(self) -> pd.DataFrame:
+        """Returns a random sample of a possible operation of the system.
 
         Parameters
         ----------
 
         Returns
         -------
-        list
-            List representing which operative zone was randomized for each TGU.
+        pandas.DataFrame
+            DataFrame of a possible operation of the system.
 
         """
-        return [random.randint(1, j) for i, j in self.opzs.itertuples()]
+        psystem_data = self.data
+        l = []
+        for tgu in psystem_data.index.unique():
+            possible_operations = psystem_data.loc[tgu]
+
+            if type(possible_operations) == pd.DataFrame:
+                # Randomly sample one option if more than one is available
+                l.append(possible_operations.sample())
+            else:
+                # Restructure the operations back to a dataframe to be composed
+                l.append(possible_operations.to_frame()
+                                            .transpose()
+                                            .rename_axis('tgu'))
+                
+        return pd.concat(l)
