@@ -21,7 +21,10 @@ For example, 's10'.
 
 import json
 import pandas as pd
+import numpy as np
 import random
+
+from cvxopt import matrix, solvers
 
 
 class PowerSystem:
@@ -41,8 +44,8 @@ class PowerSystem:
     data : pandas.DataFrame
         A pandas DataFrame containing all the provided data regarding each
         TGU
-    load : float
-        The power load being requested to the system.
+    demand : float
+        The power demand being requested to the system.
     tgus : list
         A list of Termal Generation Units as presented in system.json file.
     opzs : pandas.DataFrame
@@ -98,3 +101,49 @@ class PowerSystem:
                                             .rename_axis('tgu'))
                 
         return pd.concat(l)
+        
+    def solve(self, operation: pd.DataFrame):
+        """Returns a solution to a specific operation configuration.
+
+        Given a specific configuration to be solved, this function uses cvxopt
+        quadratic programing to solve the system.
+
+        One possible source of configuration data can be obtained by using the
+        provided `PowerSystem.sample_operation()` method, which randomly creates
+        a possible configuration for the system to be operated.
+
+        Parameters
+        ----------
+        operation : pd.DataFrame
+            DataFrame representing the operation of the system.
+
+        Returns
+        -------
+        dict
+            A dictionary containing all of the solution results
+
+        """
+    
+        demand = np.array([self.demand], dtype="double")
+        
+        # Equation parameters cP^2 + bP + a
+        a = operation.a.sum()
+        b = operation.b.to_numpy(dtype="double")
+        c = operation.c.to_numpy(dtype="double")
+        
+        # CVXOPT needs a system of equations:
+        Pmin = operation.Pmin.to_numpy(dtype="double")
+        Pmax = operation.Pmax.to_numpy(dtype="double")
+
+        P = matrix(2 * (c[..., None] * np.eye(operation.shape[0])))
+        q = matrix(b)
+
+        G_min = -1 * np.eye(operation.shape[0])
+        G_max = np.eye(operation.shape[0])
+        G = matrix(np.concatenate((G_min,G_max)))
+        h = matrix(np.concatenate((-1 * Pmin,Pmax)))
+
+        A = matrix(np.ones(operation.shape[0]), (1, c.shape[0]))
+        b = matrix(demand)
+        
+        return solvers.qp(P, q, G, h, A, b)
