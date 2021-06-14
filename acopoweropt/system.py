@@ -79,7 +79,7 @@ class PowerSystem:
         df = df.rename(columns=df.iloc[0]).drop([0])
 
         self.name = name
-        self.data = df.set_index('tgu')
+        self.data = df.set_index("tgu")
         self.demand = psystem["demand"]
 
     def sample_operation(self) -> pd.DataFrame:
@@ -104,15 +104,20 @@ class PowerSystem:
                 l.append(possible_operations.sample())
             else:
                 # Restructure the operations back to a dataframe to be composed
-                l.append(possible_operations.to_frame()
-                                            .transpose()
-                                            .rename_axis('tgu'))
-                
+                l.append(
+                    possible_operations.to_frame()
+                    .transpose()
+                    .rename_axis("tgu")
+                )
+
         return pd.concat(l)
-        
-    def solve(self, operation: pd.DataFrame,
-                    maxiters: int=15,
-                    show_progress: bool=False):
+
+    def solve(
+        self,
+        operation: pd.DataFrame,
+        maxiters: int = 15,
+        show_progress: bool = False,
+    ):
         """Returns a solution to a specific operation configuration
 
         Given a specific configuration to be solved, this function uses cvxopt
@@ -142,9 +147,9 @@ class PowerSystem:
         # CVXOPT uses matrix like objects in order to model
         # a system of equations. Numpy can be used to prepare
         # the data so that the solver can be used.
-        solvers.options['show_progress'] = show_progress
+        solvers.options["show_progress"] = show_progress
         # solvers.options['refinement'] = 2
-        solvers.options['maxiters'] = maxiters
+        solvers.options["maxiters"] = maxiters
 
         demand = np.array([self.demand], dtype="double")
 
@@ -162,24 +167,28 @@ class PowerSystem:
 
         G_min = -1 * np.eye(operation.shape[0])
         G_max = np.eye(operation.shape[0])
-        G = matrix(np.concatenate((G_min,G_max)))
-        h = matrix(np.concatenate((-1 * Pmin,Pmax)))
+        G = matrix(np.concatenate((G_min, G_max)))
+        h = matrix(np.concatenate((-1 * Pmin, Pmax)))
 
         A = matrix(np.ones(operation.shape[0]), (1, c.shape[0]))
         b = matrix(demand)
 
         # Solving using Quadratic Programing
         solution = solvers.qp(P, q, G, h, A, b)
-        
+
         # Interpreting the solution:
-        Ft = solution.get('dual objective') + a
-        Pg = pd.DataFrame([{'tgu': i+1,
-                            'Pg': Pg} for i,Pg in enumerate(solution.get('x'))]
-                          ).set_index('tgu')
-        
-        Fi = (((Pg.Pg ** 2) * operation.c) + (Pg.Pg * operation.b) + operation.c)
-        Fi_df = pd.DataFrame({'tgu':Fi.index, 'Fi':Fi.values}).set_index('tgu')
-        
-        return {'status': solution.get('status'),
-                'Ft': Ft,
-                'operation': pd.concat([operation,Pg,Fi_df], axis=1)}
+        Ft = solution.get("dual objective") + a
+        Pg = pd.DataFrame(
+            [{"tgu": i + 1, "Pg": Pg} for i, Pg in enumerate(solution.get("x"))]
+        ).set_index("tgu")
+
+        Fi = ((Pg.Pg ** 2) * operation.c) + (Pg.Pg * operation.b) + operation.c
+        Fi_df = pd.DataFrame({"tgu": Fi.index, "Fi": Fi.values}).set_index(
+            "tgu"
+        )
+
+        return {
+            "status": solution.get("status"),
+            "Ft": Ft,
+            "operation": pd.concat([operation, Pg, Fi_df], axis=1),
+        }
