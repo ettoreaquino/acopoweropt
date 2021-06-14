@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "acopoweropt"
-version = "0.1.0"
+version = "0.2.0"
 description = "Ant Colony Power Systems Optimizer"
 authors = ["Ettore Aquino <ettore@ettoreaquino.com>"]
 
@@ -10,7 +10,7 @@ include = [
     { path = "tests", format = "sdist" }
 ]
 
-exclude = ["Makefile","README.rst","systems.json","Notebook.ipynb"]
+exclude = ["Makefile","README.rst","systems.json","Notebook.ipynb","SystemSolver.ipynb"]
 
 repository = "https://github.com/ettoreaquino/acopoweropt"
 
