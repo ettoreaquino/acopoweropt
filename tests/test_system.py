@@ -37,6 +37,23 @@ class TestSystem(TestCase):
                 == sample_operation.index.to_list()
             )
 
+    def test_System_get_operation_should_return_a_valid_operation(self):
+        with self.subTest():
+            System = system.PowerSystem(name="s15")
+
+            opzs = [1,2,1,1,1,4,1,1,1,1,1,2,1,1,1]
+            operation = System.get_operation(operative_zones=opzs)
+
+            self.assertTrue(type(operation) == pd.DataFrame)
+            self.assertTrue(
+                System.data.index.unique().to_list()
+                == operation.index.to_list()
+            )
+            self.assertTrue(
+                operation.columns.to_list()
+                == ["opz", "a", "b", "c", "Pmin", "Pmax"]
+            )
+
     def test_System_should_solve_operation(self):
         with self.subTest():
             System = system.PowerSystem(name="s15")

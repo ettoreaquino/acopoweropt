@@ -144,6 +144,28 @@ class PowerSystem:
 
         return pd.concat(l)
 
+    def get_operation(self, operative_zones: list) -> pd.DataFrame:
+        """Returns the operation configuration given a list of operative zones
+
+        Parameters
+        ----------
+        operative_zones: list
+            List of operative zones for each TGU.
+
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame of an operation of the system
+
+        """
+
+        return pd.concat(
+            [
+                self.data.query("tgu == {} & opz == {}".format(i + 1, opz))
+                for i, opz in enumerate(operative_zones)
+            ]
+        )
+
     def solve(
         self,
         operation: pd.DataFrame,
