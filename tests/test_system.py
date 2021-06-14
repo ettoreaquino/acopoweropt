@@ -16,7 +16,8 @@ class TestSystem(TestCase):
             self.assertTrue(type(System.data) == pd.DataFrame)
             self.assertTrue(System.data.index.name == "tgu")
             self.assertTrue(
-                System.data.columns.to_list() == ["a", "b", "c", "Pmin", "Pmax"]
+                System.data.columns.to_list()
+                == ["opz", "a", "b", "c", "Pmin", "Pmax"]
             )
 
     def test_System_should_break_when_name_does_not_exist(self):

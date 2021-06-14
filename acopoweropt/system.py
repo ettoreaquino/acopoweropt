@@ -63,6 +63,7 @@ class PowerSystem:
 
     def __init__(self, name: str):
         self.__read_config(name=name)
+        self.__imply_operative_zones()
 
     def __read_config(self, name: str):
         # This special method initializes the power system using the config file
@@ -81,6 +82,37 @@ class PowerSystem:
         self.name = name
         self.data = df.set_index("tgu")
         self.demand = psystem["demand"]
+
+    def __imply_operative_zones(self):
+        # Imply an id to each operative zone of each TGU
+
+        # Enhances the Power System dataframe with a column containing an
+        # id which represents with operative zone that row represents to the
+        # TGU.
+
+        psystem_data = self.data
+
+        l = []
+        for tgu in psystem_data.index.unique():
+            possible_operations = psystem_data.loc[tgu]
+
+            if type(possible_operations) == pd.DataFrame:
+                possible_operations["opz"] = np.arange(
+                    1, len(possible_operations) + 1
+                )
+                l.append(possible_operations)
+            else:
+                possible_operations = (
+                    possible_operations.to_frame()
+                    .transpose()
+                    .rename_axis("tgu")
+                )
+                possible_operations["opz"] = np.arange(
+                    1, len(possible_operations) + 1
+                )
+                l.append(possible_operations)
+
+        self.data = pd.concat(l)[["opz", "a", "b", "c", "Pmin", "Pmax"]]
 
     def sample_operation(self) -> pd.DataFrame:
         """Returns a random sample of a possible operation of the system
