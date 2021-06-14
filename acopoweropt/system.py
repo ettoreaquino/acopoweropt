@@ -1,5 +1,4 @@
-"""
-Module to handle classes and methods related to a selected Power System.
+"""Module to handle classes and methods related to a selected Power System.
 
 This module should follow a systems.json file:
 { 
@@ -15,7 +14,7 @@ This module should follow a systems.json file:
 }
 
 Where {name} should be changed to whatever name you may choose to your system.
-For example, 's10'. 
+For example, 's10'. Check README.md file.
 """
 
 
@@ -45,12 +44,21 @@ class PowerSystem:
         A pandas DataFrame containing all the provided data regarding each
         TGU
     demand : float
-        The power demand being requested to the system.
+        The power demand being requested to the system
     tgus : list
-        A list of Termal Generation Units as presented in system.json file.
+        A list of Termal Generation Units as presented in system.json file
     opzs : pandas.DataFrame
         A pandas DataFrame containing the the operative zone options of each
-        TGU.
+        TGU
+
+    Methods
+    -------
+    sample_operation()
+        Returns a random sample of a possible operation of the system
+    solve(operation: pd.DataFrame)
+        Returns a dictionary containing a Total Financial Cost (Ft) and a
+        DataFrame showing the system configuration and the power dispached by
+        each TGU
     """
 
     def __init__(self, name: str):
@@ -59,7 +67,7 @@ class PowerSystem:
     def __read_config(self, name: str):
         # This special method initializes the power system using the config file
         # systems.json. If the name is not present in the file, __initialize
-        # raises an exception.
+        # raises an exception
         try:
             with open("systems.json") as f:
                 content = json.loads(f.read())
@@ -75,7 +83,7 @@ class PowerSystem:
         self.demand = psystem["demand"]
 
     def sample_operation(self) -> pd.DataFrame:
-        """Returns a random sample of a possible operation of the system.
+        """Returns a random sample of a possible operation of the system
 
         Parameters
         ----------
@@ -83,7 +91,7 @@ class PowerSystem:
         Returns
         -------
         pandas.DataFrame
-            DataFrame of a possible operation of the system.
+            DataFrame of a possible operation of the system
 
         """
         psystem_data = self.data
@@ -102,20 +110,27 @@ class PowerSystem:
                 
         return pd.concat(l)
         
-    def solve(self, operation: pd.DataFrame):
-        """Returns a solution to a specific operation configuration.
+    def solve(self, operation: pd.DataFrame,
+                    maxiters: int=15,
+                    show_progress: bool=False):
+        """Returns a solution to a specific operation configuration
 
         Given a specific configuration to be solved, this function uses cvxopt
-        quadratic programing to solve the system.
+        quadratic programing to solve the system check:
+            https://cvxopt.org/examples/tutorial/qp.html
 
         One possible source of configuration data can be obtained by using the
         provided `PowerSystem.sample_operation()` method, which randomly creates
-        a possible configuration for the system to be operated.
+        a possible configuration for the system to be operated
 
         Parameters
         ----------
         operation : pd.DataFrame
-            DataFrame representing the operation of the system.
+            DataFrame representing the operation of the system
+        maxiters=15 : int
+            Maximum number of iterations to be performed by the method.
+        show_progress=False : bool
+            Iteractively show progress during computation
 
         Returns
         -------
@@ -123,14 +138,21 @@ class PowerSystem:
             A dictionary containing all of the solution results
 
         """
-    
+
+        # CVXOPT uses matrix like objects in order to model
+        # a system of equations. Numpy can be used to prepare
+        # the data so that the solver can be used.
+        solvers.options['show_progress'] = show_progress
+        # solvers.options['refinement'] = 2
+        solvers.options['maxiters'] = maxiters
+
         demand = np.array([self.demand], dtype="double")
-        
+
         # Equation parameters cP^2 + bP + a
         a = operation.a.sum()
         b = operation.b.to_numpy(dtype="double")
         c = operation.c.to_numpy(dtype="double")
-        
+
         # CVXOPT needs a system of equations:
         Pmin = operation.Pmin.to_numpy(dtype="double")
         Pmax = operation.Pmax.to_numpy(dtype="double")
@@ -145,5 +167,19 @@ class PowerSystem:
 
         A = matrix(np.ones(operation.shape[0]), (1, c.shape[0]))
         b = matrix(demand)
+
+        # Solving using Quadratic Programing
+        solution = solvers.qp(P, q, G, h, A, b)
         
-        return solvers.qp(P, q, G, h, A, b)
+        # Interpreting the solution:
+        Ft = solution.get('dual objective') + a
+        Pg = pd.DataFrame([{'tgu': i+1,
+                            'Pg': Pg} for i,Pg in enumerate(solution.get('x'))]
+                          ).set_index('tgu')
+        
+        Fi = (((Pg.Pg ** 2) * operation.c) + (Pg.Pg * operation.b) + operation.c)
+        Fi_df = pd.DataFrame({'tgu':Fi.index, 'Fi':Fi.values}).set_index('tgu')
+        
+        return {'status': solution.get('status'),
+                'Ft': Ft,
+                'operation': pd.concat([operation,Pg,Fi_df], axis=1)}

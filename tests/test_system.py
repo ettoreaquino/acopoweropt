@@ -24,7 +24,7 @@ class TestSystem(TestCase):
             with self.assertRaises(Exception):
                 System = system.PowerSystem(name="s35")
 
-    def test_System_sample_operation_should_be_valid(self):
+    def test_System_sample_operation_should_be_a_valid_sample(self):
         with self.subTest():
             System = system.PowerSystem(name="s15")
             
@@ -35,3 +35,14 @@ class TestSystem(TestCase):
                 System.data.index.unique().to_list() ==
                 sample_operation.index.to_list()
             )
+
+    def test_System_should_solve_operation(self):
+        with self.subTest():
+            System = system.PowerSystem(name="s15")
+            
+            operation = System.sample_operation()
+            solution = System.solve(operation=operation)
+
+            self.assertTrue(type(solution.get('status')) == str)
+            self.assertTrue(type(solution.get('Ft')) == float)
+            self.assertTrue(type(solution.get('operation')) == pd.DataFrame)
