@@ -97,19 +97,13 @@ class PowerSystem:
             possible_operations = psystem_data.loc[tgu]
 
             if type(possible_operations) == pd.DataFrame:
-                possible_operations["opz"] = np.arange(
-                    1, len(possible_operations) + 1
-                )
+                possible_operations["opz"] = np.arange(1, len(possible_operations) + 1)
                 l.append(possible_operations)
             else:
                 possible_operations = (
-                    possible_operations.to_frame()
-                    .transpose()
-                    .rename_axis("tgu")
+                    possible_operations.to_frame().transpose().rename_axis("tgu")
                 )
-                possible_operations["opz"] = np.arange(
-                    1, len(possible_operations) + 1
-                )
+                possible_operations["opz"] = np.arange(1, len(possible_operations) + 1)
                 l.append(possible_operations)
 
         self.data = pd.concat(l)[["opz", "a", "b", "c", "Pmin", "Pmax"]]
@@ -136,11 +130,7 @@ class PowerSystem:
                 l.append(possible_operations.sample())
             else:
                 # Restructure the operations back to a dataframe to be composed
-                l.append(
-                    possible_operations.to_frame()
-                    .transpose()
-                    .rename_axis("tgu")
-                )
+                l.append(possible_operations.to_frame().transpose().rename_axis("tgu"))
 
         return pd.concat(l)
 
@@ -158,6 +148,13 @@ class PowerSystem:
             DataFrame of an operation of the system
 
         """
+
+        if len(operative_zones) < len(self.data.index.unique()):
+            raise Exception(
+                "Sequence of operative zones should have a lenght of {}".format(
+                    len(self.data.index.unique())
+                )
+            )
 
         return pd.concat(
             [
@@ -237,9 +234,7 @@ class PowerSystem:
         ).set_index("tgu")
 
         Fi = ((Pg.Pg ** 2) * operation.c) + (Pg.Pg * operation.b) + operation.c
-        Fi_df = pd.DataFrame({"tgu": Fi.index, "Fi": Fi.values}).set_index(
-            "tgu"
-        )
+        Fi_df = pd.DataFrame({"tgu": Fi.index, "Fi": Fi.values}).set_index("tgu")
 
         return {
             "status": solution.get("status"),
