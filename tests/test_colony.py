@@ -20,3 +20,4 @@ class TestColony(TestCase):
             Colony.initialize()
 
             self.assertTrue(type(Colony.initial_paths) == pd.DataFrame)
+            self.assertTrue(type(Colony.initial_paths.path.tolist()[0]) == str)
