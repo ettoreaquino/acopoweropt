@@ -77,7 +77,22 @@ print(solution.get('operation'))
 ```
 
 ### Defining Colonies
-An Ant Colony is nothing
+An Ant Colony should seek for a global optimal solution or "the optimal source of food". The algorithm was proposed by Marco Dorigo, check [Wiki](https://en.wikipedia.org/wiki/Ant_colony_optimization_algorithms) for more details.
+
+#### Example
+
+The code below initializes a colony with a sample operation of our power system.
+
+```python
+from acopoweropt import colony, system
+
+# Intance a Colony class which will use the 's10` Power System to initialize random paths for the colony to seek
+
+Colony = colony.Colony(n_ants=5, phr_evp_rate=0.25, power_system_name='s10')
+Colony.initialize()
+
+print(Colony.initial_paths)
+```
 
 ## License
 

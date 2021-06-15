@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "acopoweropt"
-version = "0.2.0"
+version = "0.2.1"
 description = "Ant Colony Power Systems Optimizer"
 authors = ["Ettore Aquino <ettore@ettoreaquino.com>"]
 
