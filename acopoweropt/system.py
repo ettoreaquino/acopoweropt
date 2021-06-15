@@ -238,6 +238,8 @@ class PowerSystem:
 
         return {
             "status": solution.get("status"),
-            "Ft": Ft,
+            "Ft": Ft
+            if solution.get("status") != "unknown"
+            else 10 ** 10,  # Big Number,
             "operation": pd.concat([operation, Pg, Fi_df], axis=1),
         }

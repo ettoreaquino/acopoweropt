@@ -26,13 +26,27 @@ class Colony:
         Pheromone evaporation rate
     """
 
-    def __init__(self, n_ants: int, phr_evp_rate: float, power_system_name: str):
+    def __init__(self, n_ants: int, phr_evp_rate: float):
 
         self.n_ants = n_ants
         self.phr_evp_rate = phr_evp_rate
-        self.power_system_name = power_system_name
 
-    def initialize(self):
+    def seek_food(self, ant: int, PowerSystem: system.PowerSystem) -> dict:
+        
+        option = PowerSystem.sample_operation()
+        result = PowerSystem.solve(operation=option)
+        distance = result.get("Ft")
+        status = result.get("status")
+
+        return {
+            "ant": ant,
+            "path": ",".join([str(int) for int in option.opz.to_list()]),
+            "status": status,
+            "distance": distance,
+            "tau": 1 / distance,
+        }
+
+    def initialize(self, power_system_name: str):
         """Initialize colony
 
         Initializes colony by seting the ants towards random paths. Although not ideal
@@ -51,23 +65,13 @@ class Colony:
             A dataframe showing the informations regarding the initial paths taken by the ants
         """
 
-        PSystem = system.PowerSystem(name=self.power_system_name)
+        PSystem = system.PowerSystem(name=power_system_name)
 
-        l = []
-        for ant in range(1, self.n_ants + 1):
-            option = PSystem.sample_operation()
-            result = PSystem.solve(operation=option)
-            distance = result.get("Ft")
-            status = result.get("status")
+        df = pd.DataFrame(
+            [
+                self.seek_food(ant=ant, PowerSystem=PSystem)
+                for ant in range(1, self.n_ants + 1)
+            ]
+        ).set_index("ant")
 
-            l.append(
-                {
-                    "ant": ant,
-                    "path": ",".join([str(int) for int in option.opz.to_list()]),
-                    "status": status,
-                    "distance": distance,
-                    "tau": 1 / distance,
-                }
-            )
-
-        self.initial_paths = pd.DataFrame(l).set_index("ant")
+        self.initial_paths = df
