@@ -32,8 +32,6 @@ class Colony:
         self.phr_evp_rate = phr_evp_rate
         self.power_system_name = power_system_name
 
-        self.initial_paths = None
-
     def initialize(self):
         """Initialize colony
 
@@ -65,7 +63,7 @@ class Colony:
             l.append(
                 {
                     "ant": ant,
-                    "path": option.opz.to_list(),
+                    "path": ",".join([str(int) for int in option.opz.to_list()]),
                     "status": status,
                     "distance": distance,
                     "tau": 1 / distance,

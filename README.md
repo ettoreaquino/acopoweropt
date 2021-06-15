@@ -76,7 +76,8 @@ print("Total Financial Cost: {}".format(solution.get('Ft')))
 print(solution.get('operation'))
 ```
 
-
+### Defining Colonies
+An Ant Colony is nothing
 
 ## License
 
