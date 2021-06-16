@@ -21,7 +21,9 @@ poetry add acopoweropt
 ```
 
 ## Usage
-From a domain perspective, there should be a complete decoupling between an Ant Colony and a Power System, after all ants do not have knowledge of power systems. Therefore an initial approach was to develop to main _Entities_: A `Colony` and a `Power System`. A Power System should be solved by a mathematical method which might achieve a global optimal result or not.
+From a domain perspective, there should be a complete decoupling between an Ant Colony and a Power System, after all ants do not have knowledge of power systems. This approach, although more elegant, is far from trivial to be implemented, mainly because the __enviroment__ where the ants would look for food gets deeply entangled with the domain. For example, the modeling of pheromone matrix for the traveler salesman might not be adequate for a Power Systems Unit Commitment problem.
+
+For that reason, the initial approach was to create two main _Entities_: A `Power System` and a `PowerColony`, where the first must be a Power System which can be solved by a mathematical method and the second should be an Ant Colony initialized to seek optimal results of a Power System problem.
 
 Since the dispach of "multi operative zone" Thermal Generation Units (TGUs) bring non linearities to the formulation, obtaining a global optimal financial dispach of the system is not a trivial task. The Ant Colony algorithm came in hand as a tool to iteractively seek a global optimal result without having to rely on brute computational force.
 
@@ -76,22 +78,30 @@ print("Total Financial Cost: {}".format(solution.get('Ft')))
 print(solution.get('operation'))
 ```
 
-### Defining Colonies
+### Defining Power Colonies
 An Ant Colony should seek for a global optimal solution or "the optimal source of food". The algorithm was proposed by Marco Dorigo, check [Wiki](https://en.wikipedia.org/wiki/Ant_colony_optimization_algorithms) for more details.
 
 #### Example
 
-The code below initializes a colony with a sample operation of our power system.
+The code below initializes a PowerColony with a desired PowerSystem as the "environment" for the ants to seek their food. Once instantiated, the PowerColony imediately unleashes their ants for a first seek for solutions, therefore Colony.initial_paths and Colony.pheromone can be observed.
 
 ```python
+import pandas as pd
+import numpy as np
+
 from acopoweropt import colony, system
 
-# Intance a Colony class which will use the 's10` Power System to initialize random paths for the colony to seek
+# Instance a PowerSystem to serve as enviroment
+PSystem = system.PowerSystem(name='s15')
 
-Colony = colony.Colony(n_ants=5, phr_evp_rate=0.25, power_system_name='s10')
-Colony.initialize()
+# Instance a PowerColony
+Colony = colony.PowerColony(n_ants=5,
+                            pheromone_evap_rate=0.25,
+                            PowerSystem=PSystem)
 
 print(Colony.initial_paths)
+
+print(Colony.pheromone)
 ```
 
 ## License
