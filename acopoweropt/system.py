@@ -45,8 +45,6 @@ class PowerSystem:
         TGU
     demand : float
         The power demand being requested to the system
-    tgus : list
-        A list of Termal Generation Units as presented in system.json file
     opzs : pandas.DataFrame
         A pandas DataFrame containing the the operative zone options of each
         TGU
@@ -90,6 +88,9 @@ class PowerSystem:
         # id which represents with operative zone that row represents to the
         # TGU.
 
+        # Creates a new DataFrame showing the number of possible operative zones for
+        # each TGU.
+
         psystem_data = self.data
 
         l = []
@@ -107,6 +108,7 @@ class PowerSystem:
                 l.append(possible_operations)
 
         self.data = pd.concat(l)[["opz", "a", "b", "c", "Pmin", "Pmax"]]
+        self.opzs = self.data.groupby("tgu").max()["opz"]
 
     def sample_operation(self) -> pd.DataFrame:
         """Returns a random sample of a possible operation of the system

@@ -1,22 +1,16 @@
-import pandas as pd
 from unittest import TestCase
 
 from acopoweropt import colony
+from acopoweropt import system
 
 
 class TestColony(TestCase):
-    def test_Colony_should_receive_ants(self):
+    def test_PowerColony_should_correctly_initialize(self):
         with self.subTest():
-            Colony = colony.Colony(n_ants=5, phr_evp_rate=0.25)
+            System = system.PowerSystem(name="s15")
+            Colony = colony.PowerColony(
+                n_ants=5, pheromone_evap_rate=0.25, PowerSystem=System
+            )
 
             self.assertEqual(Colony.n_ants, 5)
             self.assertEqual(Colony.phr_evp_rate, 0.25)
-
-    def test_Colony_should_initialize_paths(self):
-        with self.subTest():
-            Colony = colony.Colony(n_ants=5, phr_evp_rate=0.25)
-
-            Colony.initialize(power_system_name="s15")
-
-            self.assertTrue(type(Colony.initial_paths) == pd.DataFrame)
-            self.assertTrue(type(Colony.initial_paths.path.tolist()[0]) == str)
