@@ -17,10 +17,10 @@ class TestColony(TestCase):
             )
 
             self.assertEqual(Colony.n_ants, n_ants)
-            self.assertEqual(Colony.phr_evp_rate, pheromone_evap_rate)
+            self.assertEqual(Colony.pheromone_evap_rate, pheromone_evap_rate)
 
             # Initial paths should have the same n of rows as the number of ants
-            self.assertTrue(len(Colony.initial_paths.index) == n_ants)
+            self.assertTrue(len(Colony.paths[0].index) == n_ants)
 
             # Pheromone matrix should have a shape of max(OPZs) x TGUs
             self.assertTrue(

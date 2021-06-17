@@ -108,7 +108,7 @@ class PowerSystem:
                 l.append(possible_operations)
 
         self.data = pd.concat(l)[["opz", "a", "b", "c", "Pmin", "Pmax"]]
-        self.opzs = self.data.groupby("tgu").max()["opz"]
+        self.opzs = self.data.groupby('tgu').max()["opz"]
 
     def sample_operation(self) -> pd.DataFrame:
         """Returns a random sample of a possible operation of the system

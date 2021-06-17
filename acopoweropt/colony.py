@@ -18,7 +18,7 @@ class PowerColony:
     ----------
     n_ants : int
         Number of ants in the colony
-    phr_evp_rate : float
+    pheromone_evap_rate : float
         Pheromone evaporation rate
     power_system_name str
         Power System to serve as environment for the Ant Colony to seek solutions
@@ -40,59 +40,42 @@ class PowerColony:
     ):
 
         self.n_ants = n_ants
-        self.phr_evp_rate = pheromone_evap_rate
+        self.pheromone_evap_rate = pheromone_evap_rate
+        
+        # Initialize colony 
         self.__initialize(PowerSystem=PowerSystem)
         self.__init_phr(PowerSystem=PowerSystem)
 
-        self.update_pheromone(paths=self.initial_paths)
+        # Initial pheromone update in init
+        self.update_pheromone(paths=self.paths[0])
+        self.pheromone_history = {0: self.pheromone}
 
     def __initialize(self, PowerSystem: system.PowerSystem):
-        """Initialize colony
+        #Initialize colony
 
-        Initializes colony by seting the ants towards random paths. Although not ideal
-        each random path will make use of PowerSystem.sample_operation() and the path
-        distance will be calculated using PowerSystem.solve(operation).
+        #Initializes colony by seting the ants towards random paths. Although not ideal
+        #each random path will make use of PowerSystem.sample_operation() and the path
+        #distance will be calculated using PowerSystem.solve(operation).
 
-        Later improvements should aim to decouple the PowerSystem from within the colony
-        initialization method.
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-        pd.DataFrame
-            A dataframe showing the informations regarding the initial paths taken by the ants
-        """
-
+        #Later improvements should aim to decouple the PowerSystem from within the colony
+        #initialization method.
+    
         df = pd.DataFrame(
             [
-                self.__seek_food(ant=ant, PowerSystem=PowerSystem)
+                self.__initial_seek(ant=ant, PowerSystem=PowerSystem)
                 for ant in range(1, self.n_ants + 1)
             ]
         ).set_index("ant")
 
-        self.initial_paths = {0: df}
+        self.paths = {0:df}
 
-    def __seek_food(self, ant: int, PowerSystem: system.PowerSystem) -> dict:
+    def __initial_seek(self, ant: int, PowerSystem: system.PowerSystem) -> dict:
+        
+        operation = PowerSystem.sample_operation()
 
-        option = PowerSystem.sample_operation()
-        result = PowerSystem.solve(operation=option)
-        distance = result.get("Ft")
-        status = result.get("status")
-
-        return {
-            "ant": ant,
-            "path": ",".join([str(int) for int in option.opz.to_list()]),
-            "status": status,
-            "distance": distance,
-            "tau": 1 / distance,
-        }
+        return self.seek_food(ant=ant, operation=operation, PowerSystem=PowerSystem)
 
     def __init_phr(self, PowerSystem: system.PowerSystem) -> pd.DataFrame:
-
-        paths = self.paths[0]
-
         df = pd.DataFrame(
             np.zeros((PowerSystem.opzs.max(), PowerSystem.opzs.index.max()))
         )
@@ -102,18 +85,33 @@ class PowerColony:
 
         self.pheromone = df
 
-        for ant in paths.itertuples():
-            distance = ant.distance
-            for i, opz in enumerate(ant.path.split(",")):
-                tgu = i + 1
-                opz = int(opz)
-                pheromone = round(1000 / distance, 4)
+    def seek_food(self, ant: int, operation: pd.DataFrame, PowerSystem: system.PowerSystem) -> dict:
+        """Gets the result of a food seeking
 
-                df.at[opz, tgu] = df.at[opz, tgu] + pheromone
+        Parameters
+        ----------
+        paths : pandas.Dataframe
+            The Dataframe representing the paths taken by the ants
 
-        self.pheromone = df
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame of the updated pheromone matrix
 
-    def update_pheromone(self, paths: pd.DataFrame, initialize=False) -> pd.DataFrame:
+        """
+        result = PowerSystem.solve(operation=operation)
+        distance = result.get("Ft")
+        status = result.get("status")
+
+        return {
+            "ant": ant,
+            "path": ",".join([str(int) for int in operation.opz.to_list()]),
+            "status": status,
+            "distance": distance,
+            "tau": 1 / distance,
+        }
+
+    def update_pheromone(self, paths: pd.DataFrame) -> pd.DataFrame:
         """Updates the PowerColony.pheromone in place
 
         Parameters
