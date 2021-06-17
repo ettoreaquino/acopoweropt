@@ -29,8 +29,8 @@ class PowerColony:
         Number of ants in the colony
     pheromone_evap_rate : float
         Pheromone evaporation rate
-    initial_paths : pandas.DataFrame
-        Dataframe showing the initial paths taken by the ants
+    paths : dict
+        A dictionary of DataFrames showing the paths taken by the ants on each iteraction
     pheromone : pandas.DataFrame
         Dataframe showing the map of pheromone
     """
@@ -43,6 +43,8 @@ class PowerColony:
         self.phr_evp_rate = pheromone_evap_rate
         self.__initialize(PowerSystem=PowerSystem)
         self.__init_phr(PowerSystem=PowerSystem)
+
+        self.update_pheromone(paths=self.initial_paths)
 
     def __initialize(self, PowerSystem: system.PowerSystem):
         """Initialize colony
@@ -70,7 +72,7 @@ class PowerColony:
             ]
         ).set_index("ant")
 
-        self.initial_paths = df
+        self.initial_paths = {0: df}
 
     def __seek_food(self, ant: int, PowerSystem: system.PowerSystem) -> dict:
 
@@ -89,33 +91,66 @@ class PowerColony:
 
     def __init_phr(self, PowerSystem: system.PowerSystem) -> pd.DataFrame:
 
+        paths = self.paths[0]
+
         df = pd.DataFrame(
-            np.zeros((PowerSystem.opzs.index.max(), PowerSystem.opzs.max()))
+            np.zeros((PowerSystem.opzs.max(), PowerSystem.opzs.index.max()))
         )
         df.index = df.index + 1
         df.columns = df.columns + 1
-        df = df.rename_axis("tgu")
+        df = df.rename_axis("opz")
 
-        for ant in self.initial_paths.itertuples():
+        self.pheromone = df
+
+        for ant in paths.itertuples():
             distance = ant.distance
             for i, opz in enumerate(ant.path.split(",")):
                 tgu = i + 1
                 opz = int(opz)
-                pheromone = 1000 / distance
+                pheromone = round(1000 / distance, 4)
 
-                df.at[tgu, opz] = df.at[tgu, opz] + pheromone
+                df.at[opz, tgu] = df.at[opz, tgu] + pheromone
 
         self.pheromone = df
-        self.__calc_pheromone_probabilities()
 
-    def __calc_pheromone_probabilities(self):
-        opzs = self.pheromone.columns.tolist()
-        n_opzs = len(opzs)
+    def update_pheromone(self, paths: pd.DataFrame, initialize=False) -> pd.DataFrame:
+        """Updates the PowerColony.pheromone in place
 
-        for opz in self.pheromone.columns:
-            p_opz = "p{}".format(opz)
-            self.pheromone[p_opz] = (
-                100 * self.pheromone[opz] / self.pheromone.iloc[:, :n_opzs].sum(axis=1)
-            )
+        Parameters
+        ----------
+        paths : pandas.Dataframe
+            The Dataframe representing the paths taken by the ants
 
-            self.pheromone[p_opz] = self.pheromone[p_opz].round().astype(int)
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame of the updated pheromone matrix
+
+        """
+        for ant in paths.itertuples():
+            distance = ant.distance
+
+            for i, opz in enumerate(ant.path.split(",")):
+                tgu = i + 1
+                opz = int(opz)
+                pheromone = round(1000 / distance, 4)
+
+                self.pheromone.at[opz, tgu] = self.pheromone.at[opz, tgu] + pheromone
+
+        return self.pheromone
+
+    def choose_path(self) -> list:
+        """Returns a possible path to be taken based on the pheromone matrix
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        list
+            A sequence of operative zones.
+        """
+        return [
+            self.pheromone.sample(n=1, weights=self.pheromone[tgu], axis=0).index[0]
+            for tgu in self.pheromone.columns
+        ]

@@ -22,9 +22,7 @@ class TestColony(TestCase):
             # Initial paths should have the same n of rows as the number of ants
             self.assertTrue(len(Colony.initial_paths.index) == n_ants)
 
-            # Pheromone matrix should have a shape of TGUs X Maximum number of operative
-            # zones * 2 (extra columns for probabilites of each zone)
+            # Pheromone matrix should have a shape of max(OPZs) x TGUs
             self.assertTrue(
-                Colony.pheromone.shape
-                == (System.opzs.index.max(), System.opzs.max() * 2)
+                Colony.pheromone.shape == (System.opzs.max(), System.opzs.index.max())
             )
