@@ -38,8 +38,7 @@ def seek_food(
         "iteration": iteration,
         "path": ",".join([str(n) for n in operation.opz.to_list()]),
         "status": status,
-        "distance": distance,
-        "tau": 1 / distance,
+        "distance": distance
     }
 
 
@@ -79,10 +78,10 @@ class PowerColony:
         # Initialize colony
         self.__initialize(power_system=power_system)
         self.__init_phr(power_system=power_system)
+        self.__init_best_and_worst(power_system=power_system)
 
         # Initial pheromone update in init
-        self.update_pheromone(paths=self.paths.query("iteration == {i}".format(i=0)))
-        self.pheromone_history = {0: self.pheromone}
+        self.update_pheromone(paths=self.paths.query("iteration == {i}".format(i=0)), iteration=0)
 
     def __initialize(self, power_system: system.PowerSystem):
         # Initialize colony
@@ -118,14 +117,25 @@ class PowerColony:
         df = df.rename_axis("opz")
 
         self.pheromone = df
+        self.pheromone_history = {0: df}
 
-    def update_pheromone(self, paths: pd.DataFrame) -> pd.DataFrame:
+    def __init_best_and_worst(self, power_system: system.PowerSystem):
+        sample_path = ','.join(['1']*power_system.operative_zones.shape[0])
+
+        self.best_and_worst = pd.DataFrame([
+            {'ant': 'best', 'iteration': 0, 'path': sample_path, 'status': '', 'distance': np.inf},
+            {'ant': 'worst', 'iteration': 0, 'path': sample_path,'status': '', 'distance': -np.inf}]
+        ).set_index('ant')
+
+    def update_pheromone(self, paths: pd.DataFrame, iteration: int):
         """Updates the PowerColony.pheromone in place
 
         Parameters
         ----------
         paths : pandas.Dataframe
             The Dataframe representing the paths taken by the ants
+        iteration : int
+            The iteration when the update happened
 
         Returns
         -------
@@ -143,7 +153,7 @@ class PowerColony:
 
                 self.pheromone.at[opz, tgu] = self.pheromone.at[opz, tgu] + pheromone
 
-        return self.pheromone
+        self.pheromone_history.update({iteration: self.pheromone})
 
     def evaporate_pheromone(self, paths: pd.DataFrame, power_system: system.PowerSystem):
         """Updates the PowerColony.pheromone in place
@@ -162,13 +172,14 @@ class PowerColony:
 
         """
 
-        best_path = paths[paths.distance == paths.distance.min()].iloc[0].path.split(',')
-        worst_path = paths[paths.distance == paths.distance.max()].iloc[0].path.split(',')
+        best_path = self.best_and_worst.loc['best'].path.split(',')
+        worst_path = self.best_and_worst.loc['worst'].path.split(',')
 
         for ant in paths.itertuples():
             for i, opz in enumerate(ant.path.split(',')):
                 tgu = i + 1  # TGUs are indexed from 1
                 opz = int(opz)
+                previous_pheromone = self.pheromone.at[opz, tgu]
 
                 if power_system.operative_zones[tgu] == 1:
                     evaporation = (1 - self.pheromone_evp_rate['best'])
@@ -180,7 +191,33 @@ class PowerColony:
                     else:
                         evaporation = (1 - self.pheromone_evp_rate['mean'])
 
-                self.pheromone.at[opz, tgu] = evaporation * self.pheromone.at[opz, tgu]
+                self.pheromone.at[opz, tgu] = previous_pheromone * evaporation
+
+    def update_best_and_worst(self, paths: pd.DataFrame):
+        best = paths[paths.distance == paths.distance.min()]
+        worst = paths[paths.distance == paths.distance.max()]
+
+        best_value = best.distance.iloc[0]
+        best_path = best.path.iloc[0]
+        best_status = best.status.iloc[0]
+        best_iter = best.iteration.iloc[0]
+
+        worst_value = worst.distance.iloc[0]
+        worst_path = worst.path.iloc[0]
+        worst_status = worst.status.iloc[0]
+        worst_iter = worst.iteration.iloc[0]
+
+        if best_value <= self.best_and_worst.loc['best'].distance:
+            self.best_and_worst.at['best', 'iteration'] = best_iter
+            self.best_and_worst.at['best', 'path'] = best_path
+            self.best_and_worst.at['best', 'status'] = best_status
+            self.best_and_worst.at['best', 'distance'] = best_value
+
+        if worst_value >= self.best_and_worst.loc['worst'].distance:
+            self.best_and_worst.at['worst', 'iteration'] = worst_iter
+            self.best_and_worst.at['worst', 'path'] = worst_path
+            self.best_and_worst.at['worst', 'status'] = worst_status
+            self.best_and_worst.at['worst', 'distance'] = worst_value
 
     def choose_path(self) -> list:
         """Returns a possible path to be taken based on the pheromone matrix
