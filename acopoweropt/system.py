@@ -235,7 +235,8 @@ class PowerSystem:
             [{"tgu": i + 1, "Pg": Pg} for i, Pg in enumerate(solution.get("x"))]
         ).set_index("tgu")
 
-        Fi = ((Pg.Pg ** 2) * operation.c) + (Pg.Pg * operation.b) + operation.c
+        # Total cost of each TGU
+        Fi = ((Pg.Pg ** 2) * operation.c) + (Pg.Pg * operation.b) + operation.a
         Fi_df = pd.DataFrame({"tgu": Fi.index, "Fi": Fi.values}).set_index("tgu")
 
         return {
