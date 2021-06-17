@@ -17,7 +17,6 @@ Where {name} should be changed to whatever name you may choose to your system.
 For example, 's10'. Check README.md file.
 """
 
-
 import json
 import pandas as pd
 import numpy as np
@@ -45,7 +44,7 @@ class PowerSystem:
         TGU
     demand : float
         The power demand being requested to the system
-    opzs : pandas.DataFrame
+    operative_zones : pandas.DataFrame
         A pandas DataFrame containing the the operative zone options of each
         TGU
 
@@ -70,16 +69,16 @@ class PowerSystem:
         try:
             with open("systems.json") as f:
                 content = json.loads(f.read())
-                psystem = content[name]
-        except:
+                power_system = content[name]
+        except Exception as e:
             print("Error reading system '{}' from systems.json".format(name))
 
-        df = pd.DataFrame(psystem["data"])
+        df = pd.DataFrame(power_system["data"])
         df = df.rename(columns=df.iloc[0]).drop([0])
 
         self.name = name
         self.data = df.set_index("tgu")
-        self.demand = psystem["demand"]
+        self.demand = power_system["demand"]
 
     def __imply_operative_zones(self):
         # Imply an id to each operative zone of each TGU
@@ -91,24 +90,24 @@ class PowerSystem:
         # Creates a new DataFrame showing the number of possible operative zones for
         # each TGU.
 
-        psystem_data = self.data
+        system_data = self.data
 
-        l = []
-        for tgu in psystem_data.index.unique():
-            possible_operations = psystem_data.loc[tgu]
+        possibilities = []
+        for tgu in system_data.index.unique():
+            possible_operations = system_data.loc[tgu]
 
             if type(possible_operations) == pd.DataFrame:
                 possible_operations["opz"] = np.arange(1, len(possible_operations) + 1)
-                l.append(possible_operations)
+                possibilities.append(possible_operations)
             else:
                 possible_operations = (
                     possible_operations.to_frame().transpose().rename_axis("tgu")
                 )
                 possible_operations["opz"] = np.arange(1, len(possible_operations) + 1)
-                l.append(possible_operations)
+                possibilities.append(possible_operations)
 
-        self.data = pd.concat(l)[["opz", "a", "b", "c", "Pmin", "Pmax"]]
-        self.opzs = self.data.groupby('tgu').max()["opz"]
+        self.data = pd.concat(possibilities)[["opz", "a", "b", "c", "Pmin", "Pmax"]]
+        self.operative_zones = self.data.groupby("tgu").max()["opz"]
 
     def sample_operation(self) -> pd.DataFrame:
         """Returns a random sample of a possible operation of the system
@@ -122,19 +121,21 @@ class PowerSystem:
             DataFrame of a possible operation of the system
 
         """
-        psystem_data = self.data
-        l = []
-        for tgu in psystem_data.index.unique():
-            possible_operations = psystem_data.loc[tgu]
+        system_data = self.data
+        possibilities = []
+        for tgu in system_data.index.unique():
+            possible_operations = system_data.loc[tgu]
 
             if type(possible_operations) == pd.DataFrame:
                 # Randomly sample one option if more than one is available
-                l.append(possible_operations.sample())
+                possibilities.append(possible_operations.sample())
             else:
                 # Restructure the operations back to a dataframe to be composed
-                l.append(possible_operations.to_frame().transpose().rename_axis("tgu"))
+                possibilities.append(
+                    possible_operations.to_frame().transpose().rename_axis("tgu")
+                )
 
-        return pd.concat(l)
+        return pd.concat(possibilities)
 
     def get_operation(self, operative_zones: list) -> pd.DataFrame:
         """Returns the operation configuration given a list of operative zones
@@ -168,7 +169,7 @@ class PowerSystem:
     def solve(
         self,
         operation: pd.DataFrame,
-        maxiters: int = 15,
+        max_iterations: int = 15,
         show_progress: bool = False,
     ):
         """Returns a solution to a specific operation configuration
@@ -185,10 +186,10 @@ class PowerSystem:
         ----------
         operation : pd.DataFrame
             DataFrame representing the operation of the system
-        maxiters=15 : int
+        max_iterations : int
             Maximum number of iterations to be performed by the method.
-        show_progress=False : bool
-            Iteractively show progress during computation
+        show_progress : bool
+            Interactively show progress during computation
 
         Returns
         -------
@@ -202,7 +203,7 @@ class PowerSystem:
         # the data so that the solver can be used.
         solvers.options["show_progress"] = show_progress
         # solvers.options['refinement'] = 2
-        solvers.options["maxiters"] = maxiters
+        solvers.options["maxiters"] = max_iterations
 
         demand = np.array([self.demand], dtype="double")
 
