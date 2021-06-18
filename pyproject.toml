@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "acopoweropt"
-version = "0.3.0"
+version = "0.3.1"
 description = "Ant Colony Power Systems Optimizer"
 authors = ["Ettore Aquino <ettore@ettoreaquino.com>"]
 
@@ -14,7 +14,7 @@ exclude = ["Makefile","README.rst","systems.json","Notebook.ipynb","SystemSolver
 
 repository = "https://github.com/ettoreaquino/acopoweropt"
 
-keywords = ["power systems", "optimization", "python"]
+keywords = ["power systems", "optimization", "python", "ant-colony"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
