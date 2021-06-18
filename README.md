@@ -25,7 +25,7 @@ From a domain perspective, there should be a complete decoupling between an Ant 
 
 For that reason, the initial approach was to create two main _Entities_: A `Power System` and a `PowerColony`, where the first must be a Power System which can be solved by a mathematical method and the second should be an Ant Colony initialized to seek optimal results of a Power System problem.
 
-Since the dispach of "multi operative zone" Thermal Generation Units (TGUs) bring non linearities to the formulation, obtaining a global optimal financial dispach of the system is not a trivial task. The Ant Colony algorithm came in hand as a tool to iteractively seek a global optimal result without having to rely on brute computational force.
+Since the dispatch of "multi operative zone" Thermal Generation Units (TGUs) bring non-linearities to the formulation, obtaining a global optimal financial dispach of the system is not a trivial task. The Ant Colony algorithm came in hand as a tool to iteractively seek a global optimal result without having to rely on brute computational force.
 
 ### Defining Systems
 The systems configuration should be defined in the [`systems.json`](systems.json) file. In the example provided, 3 systems where defined: 's10', 's15' and 's40', the names were chosen for convention and will be used by the `PowerSystem` class to initialize the desired configuration.
@@ -38,7 +38,7 @@ The code below samples a possible configuration which can be used to operate the
 ```python
 from acopoweropt import system
 
-# Intance a PowerSystem class from a configuration file where 's10` defines a system configuration
+# Instance a PowerSystem class from a configuration file where 's10` defines a system configuration
 PSystem = system.PowerSystem(name='s10')
 
 # Randomly selects a possible system operation (there are cases where more than a single unit can be operated in diferent configurations)
@@ -83,33 +83,24 @@ An Ant Colony should seek for a global optimal solution or "the optimal source o
 
 #### Example
 
-The code below initializes a PowerColony with a desired PowerSystem as the "environment" for the ants to seek their food. Once instantiated, the PowerColony imediately unleashes their ants for a first seek for solutions, therefore Colony.initial_paths and Colony.pheromone can be observed.
+The code below initializes a PowerColony with a desired PowerSystem as the "environment" for the ants to seek their food. Once instantiated, the PowerColony immediately unleashes their ants for a first seek for solutions, therefore `PowerColony.paths` and `PowerColony.pheromone` can be observed.
 
 ```python
 from acopoweropt import colony, system
 
-# Um sistema de de usinas termicas pode ser instanciado via system.PowerSystem:
 PSystem = system.PowerSystem(name='s15')
-
-# Em seguida, a colonia pode ser initializada passando como parametro o sistema instanciado
-# que servira de 'ambiente' para a busca de alimento pelas formigas
-Colony = colony.PowerColony(n_ants=100,
+PColony = colony.PowerColony(n_ants=100,
                             pheromone_evp_rate={'worst': 0.75, 'mean': 0.25, 'best': 0.05},
                             power_system=PSystem)
+```
 
-# A busca por alimento pode ser realizada atraves do metodo 'seek':
-# OBS: a variavel opcional 'show_progress' permite observar as iteracoes.
+Now a PowerColony can seek for optimal sources of food:
+```python
+PColony.seek(max_iter=20, power_system=PSystem, show_progress=True)
 
-Colony.seek(max_iter=20, power_system=PSystem, show_progress=True)
+ax = PColony.paths.groupby('iteration').distance.min().plot(y='distance')
 
-# Apos a obtencao de resultados eh possivel avaliar o comportamento da solucao
-# de forma visual
-ax = Colony.paths.groupby('iteration').distance.min().plot(y='distance')
-
-# Uma animacao pode ser produzida para observar o comportamento do feromonio
-# uma pasta eh criada para conter a evolucao do feromonio em cada iteracao
-# e um gif eh produzido na raiz do projeto.
-Colony.create_pheromone_movie(duration=0.25)
+PColony.create_pheromone_movie(duration=0.25)
 ```
 
 ## License
