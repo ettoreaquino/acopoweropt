@@ -9,7 +9,7 @@ class TestColony(TestCase):
         with self.subTest():
             PowerSystem = system.PowerSystem(name="s10")
             n_ants = 5
-            pheromone_evp_rate = {'worst': 0.4, 'mean': 0.25, 'best': 0.05}
+            pheromone_evp_rate = {"worst": 0.4, "mean": 0.25, "best": 0.05}
             Colony = colony.PowerColony(
                 n_ants=n_ants,
                 pheromone_evp_rate=pheromone_evp_rate,
