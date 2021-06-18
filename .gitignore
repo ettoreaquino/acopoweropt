@@ -1,7 +1,3 @@
-
-# Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,jupyternotebooks,python
-# Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,jupyternotebooks,python
-
 ### JupyterNotebooks ###
 # gitignore template for Jupyter Notebooks
 # website: http://jupyter.org/
@@ -126,8 +122,10 @@ celerybeat.pid
 .venv/
 .vscode/
 .idea/
+notebooks/images*
 env/
 venv/
+images/
 ENV/
 env.bak/
 venv.bak/
@@ -177,4 +175,5 @@ Thumbs.db
 .history
 .ionide
 
-# End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,jupyternotebooks,python
+# Other files
+*.gif

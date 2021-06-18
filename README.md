@@ -86,22 +86,30 @@ An Ant Colony should seek for a global optimal solution or "the optimal source o
 The code below initializes a PowerColony with a desired PowerSystem as the "environment" for the ants to seek their food. Once instantiated, the PowerColony imediately unleashes their ants for a first seek for solutions, therefore Colony.initial_paths and Colony.pheromone can be observed.
 
 ```python
-import pandas as pd
-import numpy as np
-
 from acopoweropt import colony, system
 
-# Instance a PowerSystem to serve as enviroment
+# Um sistema de de usinas termicas pode ser instanciado via system.PowerSystem:
 PSystem = system.PowerSystem(name='s15')
 
-# Instance a PowerColony
-Colony = colony.PowerColony(n_ants=5,
-                            pheromone_evap_rate=0.25,
-                            PowerSystem=PSystem)
+# Em seguida, a colonia pode ser initializada passando como parametro o sistema instanciado
+# que servira de 'ambiente' para a busca de alimento pelas formigas
+Colony = colony.PowerColony(n_ants=100,
+                            pheromone_evp_rate={'worst': 0.75, 'mean': 0.25, 'best': 0.05},
+                            power_system=PSystem)
 
-print(Colony.initial_paths)
+# A busca por alimento pode ser realizada atraves do metodo 'seek':
+# OBS: a variavel opcional 'show_progress' permite observar as iteracoes.
 
-print(Colony.pheromone)
+Colony.seek(max_iter=20, power_system=PSystem, show_progress=True)
+
+# Apos a obtencao de resultados eh possivel avaliar o comportamento da solucao
+# de forma visual
+ax = Colony.paths.groupby('iteration').distance.min().plot(y='distance')
+
+# Uma animacao pode ser produzida para observar o comportamento do feromonio
+# uma pasta eh criada para conter a evolucao do feromonio em cada iteracao
+# e um gif eh produzido na raiz do projeto.
+Colony.create_pheromone_movie(duration=0.25)
 ```
 
 ## License
